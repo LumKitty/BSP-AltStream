@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- ILRepack -->
+  <PropertyGroup>
+    <ILRepackOutputFile>$(OutputPath)\$(TargetFileName)</ILRepackOutputFile>
+    <ILRepackLibraryPath>$(OutputPath);$(BeatSaberDir)\Libs;$(BeatSaberDir)\Plugins;$(BeatSaberDir)\Beat Saber_Data\Managed</ILRepackLibraryPath>
+  </PropertyGroup>
+  
+  <Target Name="ILRepacker" AfterTargets="Build">
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)\$(TargetFileName)" />
+      <InputAssemblies Include="$(OutputPath)\AltStreamLib.dll" />
+      <InputAssemblies Include="$(OutputPath)\SseClientLib.dll" />
+      <InputAssemblies Include="$(OutputPath)\WatsonWebSocket.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- Must be a fully qualified name -->
+      <!-- <DoNotInternalizeAssemblies Include="ExampleAssemblyToMerge3" /> -->
+    </ItemGroup>
+
+    <ILRepack
+      Parallel="true"
+      Internalize="true"
+      LibraryPath="$(ILRepackLibraryPath)"
+      InputAssemblies="@(InputAssemblies)"
+      TargetKind="Dll" 
+      OutputFile="$(OutputPath)\$(AssemblyName).dll" />
+  </Target>
+  <!-- /ILRepack -->
+</Project>

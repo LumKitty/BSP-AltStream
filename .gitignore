@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/BSP-JSTV/ShitSettings.cs
+/.vs
+/BSP-JSTV/BSP_JSTV.csproj.user

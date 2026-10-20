@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <BeatSaberDir>D:\Games\Standalone\BSManager\BSInstances\1.40.8</BeatSaberDir>
+    <ReferencePath>D:\Games\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed;D:\Games\Steam\steamapps\common\Beat Saber\Libs;D:\Games\Steam\steamapps\common\Beat Saber\Plugins</ReferencePath>
+  </PropertyGroup>
+</Project>
