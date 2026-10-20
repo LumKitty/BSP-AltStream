@@ -32,9 +32,7 @@ namespace BSP_AltStream {
         private const int ConnectionTimeout = 120;
         private string ChannelName;
         internal AltStreamLib.Api.ApiClient AltAPI = new();
-        private int ConnectAttempts = 0;
         internal static bool Connected = false;
-        private System.Timers.Timer ConnectTimer;
         internal EventSubClient AltEventClient;
 
         AltStreamChatMessage msg = new AltStreamChatMessage();
@@ -48,10 +46,6 @@ namespace BSP_AltStream {
 
         internal void Connect() {
             ChannelName = PluginConfig.Instance.UserName;
-            ConnectTimer = new();
-            ConnectTimer.Interval = ConnectionTimeout * 1000;
-            ConnectTimer.Elapsed += ConnectTimer_Elapsed;
-            ConnectTimer.AutoReset = false;
 
             if (AltEventClient == null) {
                 AltEventClient = new EventSubClient(ChannelName);
@@ -69,20 +63,10 @@ namespace BSP_AltStream {
             Log("Connecting to AltStream");
             Plugin.service.m_OnSystemMessageCallbacks?.InvokeAll(Plugin.service, "Connecting to AltStream");
             AltEventClient.ConnectAsync();
-            ConnectTimer.Start();
         }
 
         internal void Disconnect() {
             AltEventClient.DisconnectAsync();
-        }
-
-        private void ConnectTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
-            if (!Connected) {
-                Log("Connection timed out");
-                ConnectTimer.Stop();
-                ConnectTimer.Dispose();
-                HandleConnectionFailure();
-            }
         }
 
         private void AltEventClient_OnUnhandledReceived(EventMessage obj) {
@@ -95,9 +79,9 @@ namespace BSP_AltStream {
             Log($"* {RedeemEvent.From} redeemed \"{RedeemEvent.RewardName}\" for {RedeemEvent.Cost} {RedeemEvent.PointsName}");
 
             if (String.IsNullOrEmpty(RedeemEvent.UserInput)) {
-                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed ${RedeemEvent.RewardName}");
+                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed {RedeemEvent.RewardName}");
             } else {
-                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed ${RedeemEvent.RewardName} ({RedeemEvent.UserInput})");
+                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed {RedeemEvent.RewardName} ({RedeemEvent.UserInput})");
             }
         }
 
@@ -150,41 +134,15 @@ namespace BSP_AltStream {
         }
         private void AltEventClient_OnConnected() {
             Connected = true;
-            ConnectTimer.Stop();
-            ConnectTimer.Dispose();
             Log($"Connected to channel {ChannelName}");
             AltStreamChatChannel chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
             Plugin.service.m_OnJoinRoomCallbacks?.InvokeAll(Plugin.service, chan);
-
-            ConnectAttempts = 0;
         }
         private void AltEventClient_OnDisconnected() {
             Connected = false;
             Log("Disconnected.");
             AltStreamChatChannel chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
             Plugin.service.m_OnLeaveRoomCallbacks?.InvokeAll(Plugin.service, chan);
-            HandleConnectionFailure();
-        }
-        private async Task HandleConnectionFailure() {
-            ConnectAttempts++;
-            int Delay;
-            switch (ConnectAttempts) {
-                case 1: Delay = 1; break;
-                case 2: Delay = 5; break;
-                case 3: Delay = 10; break;
-                case 4: Delay = 20; break;
-                default: Delay = 30; break;
-            }
-            Log($"Waiting {Delay} seconds to reconnect (Attempts: {ConnectAttempts})");
-            await Task.Delay(Delay * 1000);
-            if (Connected) {
-                Log("Never mind! We got connected while waiting!");
-            } else {
-                Log("Force Disconnecting");
-                await AltEventClient.DisconnectAsync();
-                Log("Disconnected");
-                Connect();
-            }
         }
 
         internal void ConnectWrapper() {
@@ -193,7 +151,6 @@ namespace BSP_AltStream {
             //    Task.Delay(10000);
             //}
         }
-
 
         internal void SendChatMessage(string Message) {
             const string VNyanURL = "ws://localhost:8000/vnyan";
