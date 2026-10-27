@@ -41,8 +41,8 @@ namespace BSP_AltStream {
         AltStreamChatEmote FakeEmote = new AltStreamChatEmote("dfdsfadsfdsafdsf", "https://altstream.online/logo_ashe_big.gif", 420, 69);
 
         // Remove once AltStream has proper chat sending
-        WatsonWsClient wsClient = null;
-        System.Threading.CancellationToken CT = new System.Threading.CancellationToken();
+        static WatsonWsClient wsClient = null;
+        static System.Threading.CancellationToken CT = new System.Threading.CancellationToken();
 
         internal void Connect() {
             ChannelName = PluginConfig.Instance.UserName;
@@ -102,25 +102,25 @@ namespace BSP_AltStream {
                 msg = new AltStreamChatMessage();
                 usr = new AltStreamChatUser();
 
-                Log("Adding Username");
+                //Log("Adding Username");
                 usr.UserName = Context.AuthorUsername;
                 usr.DisplayName = Context.Author;
                 usr.IsSubscriber = false;
                 usr.IsBroadcaster = false;
                 usr.IsModerator = false;
 
-                Log("Adding Message");
+                //Log("Adding Message");
                 msg.Message = Context.Text;
                 msg.Id = Context.Id;
-                Log("Merging User");
+                //Log("Merging User");
                 msg.Sender = usr;
-                Log("Adding Channel");
+                //Log("Adding Channel");
                 msg.Channel = AltStreamChatService.channel;
                 msg.IsHighlighted = Highlighted;
                 msg.Emotes = [];
 
                 //string TempMessage = " " + msg.Message + " ";
-                Log("Calling ChatPlex");
+                //Log("Calling ChatPlex");
                 Plugin.service.m_OnTextMessageReceivedCallbacks?.InvokeAll(Plugin.service, msg);
             } catch (Exception ex) {
                 Log(ex.ToString());
@@ -152,14 +152,20 @@ namespace BSP_AltStream {
             //}
         }
 
-        internal void SendChatMessage(string Message) {
-            const string VNyanURL = "ws://localhost:8000/vnyan";
-            if (wsClient == null) {
-                wsClient = new WatsonWsClient(new Uri(VNyanURL));
-                wsClient.KeepAliveInterval = 1000;
-                wsClient.Start();
+        internal static async void SendChatMessage(string Message) {
+            try {
+                const string VNyanURL = "ws://localhost:8112/";
+                if (wsClient == null) {
+                    Log($"Connecting to websocket {VNyanURL}");
+                    wsClient = new WatsonWsClient(new Uri(VNyanURL));
+                    wsClient.KeepAliveInterval = 1000;
+                    wsClient.Start();
+                }
+                Log($"Sending chat message to Websocket: {Message}");
+                await wsClient.SendAsync(Message, WebSocketMessageType.Text, CT);
+            } catch (Exception Ex) {
+                Log("ERROR: " + Ex.ToString());
             }
-            wsClient.SendAsync("BSPlus " + Message, WebSocketMessageType.Text, CT);
         }
 
         internal void SendWhisper(string Message, string UserName) {

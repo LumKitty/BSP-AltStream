@@ -24,7 +24,8 @@ internal class AltStreamChatService : ChatServiceBase, IChatService {
     internal static AltStream objAltStream = new AltStream();
 
     public bool IsConnectedAndLive() {
-        return AltStream.Connected;
+        return true;
+        //return AltStream.Connected;
     }
     public bool IsInTempChannel(string p_ChannelName) {
         return false;
@@ -51,7 +52,12 @@ internal class AltStreamChatService : ChatServiceBase, IChatService {
     }
 
     public void SendTextMessage(IChatChannel p_Channel, string p_Message) {
-        objAltStream.SendChatMessage(p_Message);
+        try {
+            Functions.Log("ChatService SendTextMessage called");
+            AltStream.SendChatMessage(p_Message);
+        } catch (Exception Ex) {
+            Functions.Log(Ex.ToString());
+        }
     }
 
     public void Start() {
