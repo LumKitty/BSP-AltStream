@@ -11,7 +11,14 @@
       <InputAssemblies Include="$(OutputPath)\$(TargetFileName)" />
       <InputAssemblies Include="$(OutputPath)\AltStreamLib.dll" />
       <InputAssemblies Include="$(OutputPath)\SseClientLib.dll" />
-      <InputAssemblies Include="$(OutputPath)\WatsonWebSocket.dll" />
+      <!--
+      <InputAssemblies Include="$(OutputPath)\System.Net.Http.Json.dll" />
+      <InputAssemblies Include="$(OutputPath)\System.Text.Json.dll" />
+      <InputAssemblies Include="$(OutputPath)\System.Memory.dll" />
+      <InputAssemblies Include="$(OutputPath)\System.Runtime.CompilerServices.Unsafe.dll" />
+      <InputAssemblies Include="$(OutputPath)\System.ValueTuple.dll" />
+      <InputAssemblies Include="$(OutputPath)\System.Buffers.dll" />
+      -->
     </ItemGroup>
 
     <ItemGroup>

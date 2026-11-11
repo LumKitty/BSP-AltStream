@@ -5,7 +5,7 @@ namespace BSP_AltStream;
 
 internal class AltStreamChatMessage : IChatMessage {
     public string Id { get; internal set; } = Guid.NewGuid().ToString();
-    public bool IsSystemMessage => false;
+    public bool IsSystemMessage { get; internal set; } = false;
     public bool IsActionMessage => false;
     public bool IsHighlighted {get; internal set;} = false;
     public bool IsGiganticEmote => false;

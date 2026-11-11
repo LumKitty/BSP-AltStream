@@ -27,14 +27,14 @@ internal class Plugin {
     [OnStart]
     public void OnApplicationStart() {
         Log.Debug("OnApplicationStart");
-        PluginConfig.Instance.UserName = "LumKitty";
-        if (!string.IsNullOrEmpty(PluginConfig.Instance.UserName)) {
+        //PluginConfig.Instance.UserName = "LumKitty";
+        if (!string.IsNullOrEmpty(PluginConfig.Instance.UserName) || !string.IsNullOrEmpty(PluginConfig.Instance.BotToken)) {
             Log.Debug("Create chat service");
             service = new AltStreamChatService();
             Log.Debug("Register chat service");
             CP_SDK.Chat.Service.RegisterExternalService(service);
         } else {
-            Log.Error("Username not configured in BSP-AltStream.json");
+            Log.Error("Username or BotToken not configured in BSP-AltStream.json");
         }
     }
 

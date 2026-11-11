@@ -25,32 +25,26 @@ using System.Threading.Tasks;
 using UnityEngine;
 using static BSP_AltStream.Functions;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
-using WatsonWebsocket;
 
 namespace BSP_AltStream {
     internal class AltStream {
         private const int ConnectionTimeout = 120;
         private string ChannelName;
-        internal AltStreamLib.Api.ApiClient AltAPI = new();
+        //internal static AltStreamLib.Api.ApiClient AltAPI = new(PluginConfig.Instance.BotToken);
         internal static bool Connected = false;
         internal EventSubClient AltEventClient;
 
-        AltStreamChatMessage msg = new AltStreamChatMessage();
-        AltStreamChatUser usr = new AltStreamChatUser();
         AltStreamChatChannel chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
         AltStreamChatEmote FakeEmote = new AltStreamChatEmote("dfdsfadsfdsafdsf", "https://altstream.online/logo_ashe_big.gif", 420, 69);
-
-        // Remove once AltStream has proper chat sending
-        static WatsonWsClient wsClient = null;
-        static System.Threading.CancellationToken CT = new System.Threading.CancellationToken();
 
         internal void Connect() {
             ChannelName = PluginConfig.Instance.UserName;
 
             if (AltEventClient == null) {
-                AltEventClient = new EventSubClient(ChannelName);
+                AltEventClient = new EventSubClient(PluginConfig.Instance.UserName, PluginConfig.Instance.BotToken);
                 AltEventClient.OnMessageReceived += AltEventClient_OnMessageReceived;
                 AltEventClient.OnHighlightReceived += AltEventClient_OnHighlightReceived;
+                AltEventClient.OnSystemMessageReceived += AltEventClient_OnSystemMessageReceived;
 
                 AltEventClient.OnRaidReceived += AltEventClient_OnRaidReceived;
                 AltEventClient.OnRedemptionReceived += AltEventClient_OnRedemptionReceived;
@@ -69,54 +63,50 @@ namespace BSP_AltStream {
             AltEventClient.DisconnectAsync();
         }
 
-        private void AltEventClient_OnUnhandledReceived(EventMessage obj) {
+        private void AltEventClient_OnUnhandledReceived(Data obj) {
             Log("Unrecognised Event:");
             Log(Newtonsoft.Json.JsonConvert.SerializeObject(obj));
         }
 
-        private void AltEventClient_OnRedemptionReceived(EventMessage obj) {
-            AltStreamLib.EventSub.Chat.Models.Events.Redemption RedeemEvent = (AltStreamLib.EventSub.Chat.Models.Events.Redemption)obj.Event;
-            Log($"* {RedeemEvent.From} redeemed \"{RedeemEvent.RewardName}\" for {RedeemEvent.Cost} {RedeemEvent.PointsName}");
+        private void AltEventClient_OnRedemptionReceived(Data obj) {
+            //AltStreamLib.EventSub.Chat.Models.Events.Redemption RedeemEvent = (AltStreamLib.EventSub.Chat.Models.Events.Redemption)obj.Event;
+            Redemption RedeemEvent = obj.Redemption;
+            Log($"* {RedeemEvent.From.ChannelName} redeemed \"{RedeemEvent.RewardName}\" for {RedeemEvent.Cost} {RedeemEvent.PointsName}");
 
             if (String.IsNullOrEmpty(RedeemEvent.UserInput)) {
-                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed {RedeemEvent.RewardName}");
+                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From.DisplayName} redeemed {RedeemEvent.RewardName}");
             } else {
-                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From} redeemed {RedeemEvent.RewardName} ({RedeemEvent.UserInput})");
+                Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RedeemEvent.From.DisplayName} redeemed {RedeemEvent.RewardName} ({RedeemEvent.UserInput})");
             }
         }
 
-        private void AltEventClient_OnRaidReceived(EventMessage obj) {
-            AltStreamLib.EventSub.Chat.Models.Events.RaidIncoming RaidEvent = (AltStreamLib.EventSub.Chat.Models.Events.RaidIncoming)obj.Event;
-            Log($"* {RaidEvent.SourceUsername} raided with {RaidEvent.Viewers}");
-            usr = new AltStreamChatUser();
-            chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
-            usr.UserName = RaidEvent.SourceUsername;
+        private void AltEventClient_OnRaidReceived(Data obj) {
+            //AltStreamLib.EventSub.Chat.Models.Events.RaidIncoming RaidEvent = (AltStreamLib.EventSub.Chat.Models.Events.RaidIncoming)obj.Event;
+            Raid RaidEvent = obj.Raid;
+            
+            Log($"* {RaidEvent.From.DisplayName} raided with {RaidEvent.Viewers}");
+            AltStreamChatUser usr = new AltStreamChatUser(obj.Raid.From);
+            //chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
             Plugin.service.m_OnChannelRaidCallbacks?.InvokeAll(Plugin.service, chan, usr, RaidEvent.Viewers);
         }
 
-        private void AltMessageReceived(AltStreamLib.EventSub.Chat.Models.Message Context, bool Highlighted = false) {
+        private void AltMessageReceived(Data Context, bool Highlighted = false, bool SystemMessage = false) {
 
             try {
                 // Convert to BeatSaber message object
 
-                msg = new AltStreamChatMessage();
-                usr = new AltStreamChatUser();
-
-                //Log("Adding Username");
-                usr.UserName = Context.AuthorUsername;
-                usr.DisplayName = Context.Author;
-                usr.IsSubscriber = false;
-                usr.IsBroadcaster = false;
-                usr.IsModerator = false;
+                AltStreamChatMessage msg = new AltStreamChatMessage();
+                AltStreamChatUser usr = new AltStreamChatUser(Context.Author);
 
                 //Log("Adding Message");
-                msg.Message = Context.Text;
-                msg.Id = Context.Id;
+                msg.Message = Context.Message.Text;
+                msg.Id = Context.Message.Id;
                 //Log("Merging User");
                 msg.Sender = usr;
                 //Log("Adding Channel");
                 msg.Channel = AltStreamChatService.channel;
                 msg.IsHighlighted = Highlighted;
+                msg.IsSystemMessage = SystemMessage;
                 msg.Emotes = [];
 
                 //string TempMessage = " " + msg.Message + " ";
@@ -126,12 +116,16 @@ namespace BSP_AltStream {
                 Log(ex.ToString());
             }
         }
-        private void AltEventClient_OnHighlightReceived(EventMessage obj) {
-            AltMessageReceived(obj.Context, true);
+        private void AltEventClient_OnHighlightReceived(Data message) {
+            AltMessageReceived(message, true);
         }
-        private void AltEventClient_OnMessageReceived(AltStreamLib.EventSub.Chat.Models.Message message) {
+        private void AltEventClient_OnMessageReceived(Data message) {
             AltMessageReceived(message);
         }
+        private void AltEventClient_OnSystemMessageReceived(Data message) {
+            AltMessageReceived(message, false, true);
+        }
+
         private void AltEventClient_OnConnected() {
             Connected = true;
             Log($"Connected to channel {ChannelName}");
@@ -154,6 +148,7 @@ namespace BSP_AltStream {
 
         internal static async void SendChatMessage(string Message) {
             try {
+                /*
                 const string VNyanURL = "ws://localhost:8112/";
                 if (wsClient == null) {
                     Log($"Connecting to websocket {VNyanURL}");
@@ -163,6 +158,14 @@ namespace BSP_AltStream {
                 }
                 Log($"Sending chat message to Websocket: {Message}");
                 await wsClient.SendAsync(Message, WebSocketMessageType.Text, CT);
+                */
+                //await AltAPI.SendChatMessageAsync(PluginConfig.Instance.UserName, Message);
+                JObject JSONMessage = new JObject(
+                    new JProperty("channel", PluginConfig.Instance.UserName),
+                    new JProperty("message", Message)
+                );
+                await httpRequest.HttpRequest("POST", "https://altstream.online/api/v2/chat", JSONMessage.ToString(), PluginConfig.Instance.BotToken);
+
             } catch (Exception Ex) {
                 Log("ERROR: " + Ex.ToString());
             }

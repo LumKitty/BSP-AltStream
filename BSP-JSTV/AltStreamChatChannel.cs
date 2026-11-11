@@ -4,7 +4,7 @@ namespace BSP_AltStream;
 
 internal class AltStreamChatChannel : IChatChannel {
     private string _Name = "NULLCHANNEL";
-    public string Id => "lkjstv_"+Name;
+    public string Id => "lkalts_"+Name;
     public string Name { get { return _Name; } set { _Name = value; } }
     public bool IsTemp => false;
     public string Prefix => "";

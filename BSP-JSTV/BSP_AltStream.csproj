@@ -44,12 +44,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="WatsonWebsocket" Version="4.1.8" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="AltStreamLib">
-      <HintPath>..\..\Libs\AltStreamLib v0.3.13\net46\AltStreamLib.dll</HintPath>
+      <HintPath>..\..\Libs\AltStreamLib-v0.4.25-net481\AltStreamLib.dll</HintPath>
     </Reference>
     <Reference Include="BeatSaber.ViewSystem">
       <Private>false</Private>
