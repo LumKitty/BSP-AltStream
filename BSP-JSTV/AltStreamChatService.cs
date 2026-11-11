@@ -62,7 +62,7 @@ internal class AltStreamChatService : ChatServiceBase, IChatService {
 
     public void Start() {
         try {
-            EventHandler = new Thread(new ThreadStart(objAltStream.ConnectWrapper));
+            EventHandler = new Thread(new ThreadStart(objAltStream.Connect));
             EventHandler.Name = "AltStream_ConnectBot";
             EventHandler.Start();
             

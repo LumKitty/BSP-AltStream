@@ -20,7 +20,11 @@ internal class AltStreamChatUser : IChatUser {
         Id = User.Id;
         UserName = User.ChannelName;
         DisplayName = User.DisplayName;
-        Color = User.Color;
+        if (User.Color != null) {
+            Color = User.Color;
+        } else {
+            Color = "#FE4904";
+        }
         IsBroadcaster = User.Roles.Broadcaster;
         IsModerator = User.Roles.Moderator;
         IsSubscriber = User.Roles.ChannelSubscriber;

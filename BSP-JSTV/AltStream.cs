@@ -85,9 +85,10 @@ namespace BSP_AltStream {
             Raid RaidEvent = obj.Raid;
             
             Log($"* {RaidEvent.From.DisplayName} raided with {RaidEvent.Viewers}");
-            AltStreamChatUser usr = new AltStreamChatUser(obj.Raid.From);
-            //chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
-            Plugin.service.m_OnChannelRaidCallbacks?.InvokeAll(Plugin.service, chan, usr, RaidEvent.Viewers);
+            
+            Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{RaidEvent.From.DisplayName} raided with {RaidEvent.Viewers} viewers");
+            //AltStreamChatUser usr = new AltStreamChatUser(obj.Raid.From);
+            //Plugin.service.m_OnChannelRaidCallbacks?.InvokeAll(Plugin.service, chan, usr, RaidEvent.Viewers); // IDK why the OnChannelRaidCallback doesn't work!
         }
 
         private void AltMessageReceived(Data Context, bool Highlighted = false, bool SystemMessage = false) {
@@ -116,15 +117,9 @@ namespace BSP_AltStream {
                 Log(ex.ToString());
             }
         }
-        private void AltEventClient_OnHighlightReceived(Data message) {
-            AltMessageReceived(message, true);
-        }
-        private void AltEventClient_OnMessageReceived(Data message) {
-            AltMessageReceived(message);
-        }
-        private void AltEventClient_OnSystemMessageReceived(Data message) {
-            AltMessageReceived(message, false, true);
-        }
+        private void AltEventClient_OnMessageReceived(Data message)       { AltMessageReceived(message); }
+        private void AltEventClient_OnHighlightReceived(Data message)     { AltMessageReceived(message, true); }
+        private void AltEventClient_OnSystemMessageReceived(Data message) { AltMessageReceived(message, false, true); }
 
         private void AltEventClient_OnConnected() {
             Connected = true;
@@ -139,27 +134,9 @@ namespace BSP_AltStream {
             Plugin.service.m_OnLeaveRoomCallbacks?.InvokeAll(Plugin.service, chan);
         }
 
-        internal void ConnectWrapper() {
-            Connect();
-            //while(true) {
-            //    Task.Delay(10000);
-            //}
-        }
-
         internal static async void SendChatMessage(string Message) {
             try {
-                /*
-                const string VNyanURL = "ws://localhost:8112/";
-                if (wsClient == null) {
-                    Log($"Connecting to websocket {VNyanURL}");
-                    wsClient = new WatsonWsClient(new Uri(VNyanURL));
-                    wsClient.KeepAliveInterval = 1000;
-                    wsClient.Start();
-                }
-                Log($"Sending chat message to Websocket: {Message}");
-                await wsClient.SendAsync(Message, WebSocketMessageType.Text, CT);
-                */
-                //await AltAPI.SendChatMessageAsync(PluginConfig.Instance.UserName, Message);
+                //await AltAPI.SendChatMessageAsync(PluginConfig.Instance.UserName, Message); // AltAPI depends on System.Memory.dll and Beat Saber hates that! >.<
                 JObject JSONMessage = new JObject(
                     new JProperty("channel", PluginConfig.Instance.UserName),
                     new JProperty("message", Message)
