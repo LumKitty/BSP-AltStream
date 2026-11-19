@@ -27,6 +27,6 @@ Emote parsing is not yet supported
 Based on [BSP-WS by MilkyDelta](https://github.com/milkydelta/BSP-WS) - This would not have been possible without having this to base things on
 
 ### Shameless plug
-https://altstream.online/LumKitty
+https://altstream.online/LumKitty  
 https://joystick.tv/u/LumKitty  
 https://twitch.tv/LumKitty  
