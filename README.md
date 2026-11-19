@@ -2,6 +2,8 @@
 
 Beta software - It works, but could use more testing... hopefully this is where you come in!
 
+<img width="404" height="324" alt="image" src="https://github.com/user-attachments/assets/bc0ab695-8dc4-4cdf-b63a-0306bdb24bff" />
+
 ### Setup - AltStream website:
 1. Visit https://altstream.online/lumkitty/settings?tab=bot
 2. Create a new bot, make a note of the token
