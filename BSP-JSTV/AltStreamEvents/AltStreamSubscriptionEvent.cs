@@ -9,6 +9,6 @@ namespace BSP_AltStream.AltStreamEvents {
     internal class AltStreamSubscriptionEvent : IChatSubscriptionEvent {
         public string DisplayName { get; set; }
         public string SubPlan { get; set; }
-        public bool IsGift { get; set; }
+        public bool IsGift { get; set; } = false;
     }
 }

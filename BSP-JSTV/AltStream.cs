@@ -4,6 +4,7 @@ using AltStreamLib.Api.v1.Models;
 using AltStreamLib.EventSub;
 using AltStreamLib.EventSub.Chat.Models;
 using AltStreamLib.Logging;
+using BSP_AltStream.AltStreamEvents;
 using CP_SDK.Chat;
 using CP_SDK.UI.Modals;
 using CP_SDK_WebSocketSharp;
@@ -11,18 +12,6 @@ using IPA.Config.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.WebSockets;
-using System.Runtime;
-using System.Runtime.Remoting.Messaging;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 using static BSP_AltStream.Functions;
 using static UnityEngine.UIElements.UxmlAttributeDescription;
 
@@ -47,8 +36,11 @@ namespace BSP_AltStream {
                 AltEventClient.OnSystemMessageReceived += AltEventClient_OnSystemMessageReceived;
 
                 AltEventClient.OnRaidReceived += AltEventClient_OnRaidReceived;
+                AltEventClient.OnFollowReceived += AltEventClient_OnFollowReceived;
                 AltEventClient.OnRedemptionReceived += AltEventClient_OnRedemptionReceived;
                 AltEventClient.OnUnhandledReceived += AltEventClient_OnUnhandledReceived;
+                AltEventClient.OnSubscriptionReceived += AltEventClient_OnSubscriptionReceived;
+                AltEventClient.OnTipReceived += AltEventClient_OnTipReceived;
 
                 AltEventClient.OnConnected += AltEventClient_OnConnected;
                 AltEventClient.OnDisconnected += AltEventClient_OnDisconnected;
@@ -57,6 +49,25 @@ namespace BSP_AltStream {
             Log("Connecting to AltStream");
             Plugin.service.m_OnSystemMessageCallbacks?.InvokeAll(Plugin.service, "Connecting to AltStream");
             AltEventClient.ConnectAsync();
+        }
+
+        private void AltEventClient_OnTipReceived(Data obj) {
+            AltStreamChatUser usr = new AltStreamChatUser(obj.Author);
+            //Plugin.service.m_OnChannelBitsCallbacks?.InvokeAll(Plugin.service, chan, usr, obj.Kofi.Amount);
+            Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{obj.FollowedBy.DisplayName} donated {obj.Kofi.CurrencyCode}{obj.Kofi.Amount}");
+        }
+
+        private void AltEventClient_OnSubscriptionReceived(Data obj) {
+            AltStreamChatUser usr = new AltStreamChatUser(obj.Author);
+            AltStreamSubscriptionEvent sub = new AltStreamSubscriptionEvent();
+            sub.DisplayName = obj.Author.DisplayName;
+            sub.SubPlan = obj.Kofi.TierName;
+            Plugin.service.m_OnChannelSubscriptionCallbacks.InvokeAll(Plugin.service, chan, usr, sub);
+        }
+
+        private void AltEventClient_OnFollowReceived(Data obj) {
+            Log($"* {obj.FollowedBy.DisplayName} followed");
+            Plugin.service.m_OnSystemMessageCallbacks.InvokeAll(Plugin.service, $"{obj.FollowedBy.DisplayName} followed");
         }
 
         internal void Disconnect() {
@@ -124,13 +135,11 @@ namespace BSP_AltStream {
         private void AltEventClient_OnConnected() {
             Connected = true;
             Log($"Connected to channel {ChannelName}");
-            AltStreamChatChannel chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
             Plugin.service.m_OnJoinRoomCallbacks?.InvokeAll(Plugin.service, chan);
         }
         private void AltEventClient_OnDisconnected() {
             Connected = false;
             Log("Disconnected.");
-            AltStreamChatChannel chan = new AltStreamChatChannel(PluginConfig.Instance.UserName);
             Plugin.service.m_OnLeaveRoomCallbacks?.InvokeAll(Plugin.service, chan);
         }
 
